@@ -1,10 +1,12 @@
 from modules.hash_generator import hash_menu
 from modules.whois_lookup import whois_menu
 from modules.dns_enum import dns_menu
+from modules.port_scanner import port_scan_menu
 
 print("1. Hash Generator")
 print("2. WHOIS Lookup")
 print("3. DNS Enumeration")
+print("4. Port Scanner")
 
 choice = input("Enter choice: ")
 
@@ -16,6 +18,9 @@ elif choice == "2":
 
 elif choice == "3":
     dns_menu()
+
+elif choice == "4":
+    port_scan_menu()
 
 else:
     print("Invalid choice")
