@@ -3,12 +3,14 @@ from modules.whois_lookup import whois_menu
 from modules.dns_enum import dns_menu
 from modules.port_scanner import port_scan_menu
 from modules.ping_sweep import ping_sweep_menu
+from modules.phishing_checker import phishing_url_menu
 
 print("1. Hash Generator")
 print("2. WHOIS Lookup")
 print("3. DNS Enumeration")
 print("4. Port Scanner")
 print("5. Ping Sweep")
+print("6. Phishing URL Checker")
 
 choice = input("Enter choice: ")
 
@@ -26,6 +28,9 @@ elif choice == "4":
     
 elif choice == "5":
     ping_sweep_menu()
+
+elif choice == "6":
+    phishing_url_menu()
 
 else:
     print("Invalid choice")
