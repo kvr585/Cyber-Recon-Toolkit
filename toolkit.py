@@ -4,6 +4,7 @@ from modules.dns_enum import dns_menu
 from modules.port_scanner import port_scan_menu
 from modules.ping_sweep import ping_sweep_menu
 from modules.phishing_checker import phishing_url_menu
+from modules.log_analyzer import log_analyzer_menu
 
 print("1. Hash Generator")
 print("2. WHOIS Lookup")
@@ -11,6 +12,7 @@ print("3. DNS Enumeration")
 print("4. Port Scanner")
 print("5. Ping Sweep")
 print("6. Phishing URL Checker")
+print("7. Log Analyzer")
 
 choice = input("Enter choice: ")
 
@@ -31,6 +33,9 @@ elif choice == "5":
 
 elif choice == "6":
     phishing_url_menu()
+
+elif choice == "7":
+    log_analyzer_menu()
 
 else:
     print("Invalid choice")
