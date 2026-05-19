@@ -110,7 +110,12 @@ def get_banner(socket_obj, port):
         return "No Banner"
 
 
-def scan_port(target, port):
+def scan_port(
+    target,
+    port,
+    timeout_value,
+    banner_scan=True
+):
 
     try:
 
@@ -119,7 +124,9 @@ def scan_port(target, port):
             socket.SOCK_STREAM
         )
 
-        s.settimeout(0.3)
+        s.settimeout(
+            timeout_value
+        )
 
         result = s.connect_ex(
             (target, port)
@@ -138,10 +145,14 @@ def scan_port(target, port):
 
                 service = "Unknown"
 
-            banner = get_banner(
-                s,
-                port
-            )
+            banner = "-"
+
+            if banner_scan:
+
+                banner = get_banner(
+                    s,
+                    port
+                )
 
             vulnerability = ""
 
@@ -165,7 +176,10 @@ def scan_port(target, port):
 
             if (
                 banner and
-                banner != "No Banner"
+                banner not in [
+                    "-",
+                    "No Banner"
+                ]
             ):
 
                 print(
@@ -181,6 +195,16 @@ def scan_port(target, port):
                     f"Warning:"
                     f"[/red] {vulnerability}"
                 )
+
+        try:
+
+            s.shutdown(
+                socket.SHUT_RDWR
+            )
+
+        except:
+
+            pass
 
         s.close()
 
@@ -248,7 +272,10 @@ def display_summary():
 
             banner_display = (
                 details["banner"]
-                if details["banner"] != "No Banner"
+                if details["banner"] not in [
+                    "No Banner",
+                    "-"
+                ]
                 else "-"
             )
 
@@ -312,10 +339,22 @@ def run_port_scan(
 
     futures = []
 
+    # Default settings
+    timeout_value = 0.3
+    banner_scan = True
+    max_workers = 100
+
+    # Faster settings for extended scans
+    if end_port > 5000:
+
+        timeout_value = 0.35
+        banner_scan = False
+        max_workers = 120
+
     try:
 
         with ThreadPoolExecutor(
-            max_workers=50
+            max_workers=max_workers
         ) as executor:
 
             for port in range(
@@ -326,10 +365,14 @@ def run_port_scan(
                 future = executor.submit(
                     scan_port,
                     resolved_ip,
-                    port
+                    port,
+                    timeout_value,
+                    banner_scan
                 )
 
-                futures.append(future)
+                futures.append(
+                    future
+                )
 
                 if (
                     port % 5000 == 0 and
@@ -348,13 +391,11 @@ def run_port_scan(
 
                 future.result()
 
-        if end_port > 5000:
-
-            print(
-                "\n[cyan]"
-                "Finalizing scan results..."
-                "[/cyan]"
-            )
+        print(
+            "\n[cyan]"
+            "Finalizing scan results..."
+            "[/cyan]"
+        )
 
         end_time = time.time()
 
