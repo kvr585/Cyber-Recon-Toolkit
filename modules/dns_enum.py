@@ -1,5 +1,6 @@
 import dns.resolver
 import json
+import time
 
 from urllib.parse import urlparse
 
@@ -9,6 +10,15 @@ from rich.table import Table
 
 
 console = Console()
+
+
+def truncate_value(value, limit=80):
+
+    if len(value) > limit:
+
+        return value[:limit] + "..."
+
+    return value
 
 
 def dns_lookup(domain):
@@ -23,6 +33,8 @@ def dns_lookup(domain):
         f"Target:[/bold yellow] {domain}"
     )
 
+    start_time = time.time()
+
     record_types = [
         "A",
         "AAAA",
@@ -34,21 +46,23 @@ def dns_lookup(domain):
 
     dns_results = {}
 
+    # Single unified table
+    table = Table(
+        title=f"DNS Enumeration - {domain}"
+    )
+
+    table.add_column(
+        "Type",
+        style="cyan",
+        no_wrap=True
+    )
+
+    table.add_column(
+        "Value",
+        style="green"
+    )
+
     for record in record_types:
-
-        table = Table(
-            title=f"{record} Records"
-        )
-
-        table.add_column(
-            "Record Type",
-            style="cyan"
-        )
-
-        table.add_column(
-            "Value",
-            style="green"
-        )
 
         try:
 
@@ -65,12 +79,14 @@ def dns_lookup(domain):
 
                 dns_results[record].append(value)
 
-                table.add_row(
-                    record,
+                display_value = truncate_value(
                     value
                 )
 
-            console.print(table)
+                table.add_row(
+                    record,
+                    display_value
+                )
 
         except dns.resolver.NoAnswer:
 
@@ -101,8 +117,42 @@ def dns_lookup(domain):
         except Exception as e:
 
             print(
-                f"[red]Error:[/red] {e}"
+                f"[red]"
+                f"Error resolving "
+                f"{record}:"
+                f"[/red] {e}"
             )
+
+    console.print(table)
+
+    # DNS Summary
+    print(
+        "\n[bold cyan]"
+        "DNS Summary"
+        "[/bold cyan]"
+    )
+
+    for record, values in dns_results.items():
+
+        print(
+            f"[green]{record}[/green]: "
+            f"{len(values)} records"
+        )
+
+    # Timing
+    end_time = time.time()
+
+    elapsed = round(
+        end_time - start_time,
+        2
+    )
+
+    print(
+        f"\n[bold yellow]"
+        f"Enumeration completed in "
+        f"{elapsed} seconds"
+        f"[/bold yellow]"
+    )
 
     # Save report
     try:

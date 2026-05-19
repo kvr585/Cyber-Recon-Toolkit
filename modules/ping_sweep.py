@@ -1,6 +1,7 @@
 import subprocess
 import threading
 import json
+import time
 
 from datetime import datetime
 
@@ -33,21 +34,79 @@ def ping_host(ip):
         pass
 
 
-def run_ping_sweep(subnet):
+def validate_subnet(subnet):
 
-    # Validate subnet
     parts = subnet.split(".")
 
     if len(parts) != 3:
 
+        return False
+
+    try:
+
+        for part in parts:
+
+            value = int(part)
+
+            if value < 0 or value > 255:
+
+                return False
+
+        return True
+
+    except:
+
+        return False
+
+
+def sort_ips(ip_list):
+
+    return sorted(
+        ip_list,
+        key=lambda ip: list(
+            map(int, ip.split("."))
+        )
+    )
+
+
+def save_report():
+
+    timestamp = datetime.now().strftime(
+        "%Y-%m-%d_%H-%M-%S"
+    )
+
+    report_file = (
+        f"reports/"
+        f"ping_sweep_{timestamp}.json"
+    )
+
+    try:
+
+        with open(report_file, "w") as f:
+
+            json.dump(
+                alive_hosts,
+                f,
+                indent=4
+            )
+
         print(
-            "[red]"
-            "Invalid subnet."
-            " Format should be like 192.168.1"
-            "[/red]"
+            f"\n[bold green]"
+            f"Report saved:"
+            f"[/bold green] "
+            f"{report_file}"
         )
 
-        return
+    except Exception as e:
+
+        print(
+            f"[red]"
+            f"Failed to save report:"
+            f"[/red] {e}"
+        )
+
+
+def run_ping_sweep(subnet):
 
     threads = []
 
@@ -58,6 +117,8 @@ def run_ping_sweep(subnet):
         f"Scanning subnet:"
         f"[/bold yellow] {subnet}.0/24\n"
     )
+
+    start_time = time.time()
 
     for i in range(1, 255):
 
@@ -76,58 +137,48 @@ def run_ping_sweep(subnet):
 
         t.join()
 
+    end_time = time.time()
+
+    elapsed = round(
+        end_time - start_time,
+        2
+    )
+
     print(
         "\n[bold yellow]"
         "Ping Sweep Completed"
         "[/bold yellow]"
     )
 
+    print(
+        f"[bold cyan]"
+        f"Scan completed in "
+        f"{elapsed} seconds"
+        f"[/bold cyan]"
+    )
+
     if alive_hosts:
+
+        sorted_hosts = sort_ips(
+            alive_hosts
+        )
 
         print(
             f"\n[bold green]"
-            f"Alive Hosts ({len(alive_hosts)}):"
+            f"Alive Hosts Found:"
+            f" {len(sorted_hosts)}"
             f"[/bold green]"
         )
 
-        for host in alive_hosts:
+        for host in sorted_hosts:
 
             print(f"- {host}")
 
-        # Save report
-        timestamp = datetime.now().strftime(
-            "%Y-%m-%d_%H-%M-%S"
-        )
+        alive_hosts.clear()
 
-        report_file = (
-            f"reports/"
-            f"ping_sweep_{timestamp}.json"
-        )
+        alive_hosts.extend(sorted_hosts)
 
-        try:
-
-            with open(report_file, "w") as f:
-
-                json.dump(
-                    alive_hosts,
-                    f,
-                    indent=4
-                )
-
-            print(
-                f"\n[bold green]"
-                f"Report saved:"
-                f"[/bold green] "
-                f"{report_file}"
-            )
-
-        except Exception as e:
-
-            print(
-                f"[red]"
-                f"Failed to save report:"
-                f"[/red] {e}"
-            )
+        save_report()
 
     else:
 
@@ -150,7 +201,7 @@ def ping_sweep_menu():
 
         subnet = console.input(
             "\n[bold green]"
-            "toolkit/pingsweep >[/bold green] "
+            "Subnet >[/bold green] "
         ).strip()
 
         if subnet.lower() in [
@@ -161,6 +212,17 @@ def ping_sweep_menu():
 
             break
 
+        if not validate_subnet(subnet):
+
+            print(
+                "[red]"
+                "Invalid subnet format."
+                " Example: 192.168.1"
+                "[/red]"
+            )
+
+            continue
+
         run_ping_sweep(subnet)
 
         print("\n1. Scan Another Subnet")
@@ -168,7 +230,7 @@ def ping_sweep_menu():
 
         choice = console.input(
             "\n[bold green]"
-            "toolkit/pingsweep >[/bold green] "
+            "Choice >[/bold green] "
         ).strip()
 
         if choice == "2":

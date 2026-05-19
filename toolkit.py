@@ -1,3 +1,4 @@
+import os
 from rich import print
 from rich.console import Console
 from rich.panel import Panel
@@ -13,6 +14,8 @@ from modules.report_generator import generate_report_menu
 
 
 console = Console()
+os.system("clear")
+
 
 
 def display_banner():

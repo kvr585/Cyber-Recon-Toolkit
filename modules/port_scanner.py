@@ -1,7 +1,12 @@
 import socket
-import threading
 import json
 import ipaddress
+import time
+
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    as_completed
+)
 
 from datetime import datetime
 
@@ -45,6 +50,66 @@ def is_valid_target(target):
         return False
 
 
+def resolve_target(target):
+
+    try:
+
+        resolved_ip = socket.gethostbyname(
+            target
+        )
+
+        print(
+            f"[cyan]"
+            f"Resolved IP:"
+            f"[/cyan] {resolved_ip}"
+        )
+
+        return resolved_ip
+
+    except:
+
+        return None
+
+
+def get_banner(socket_obj, port):
+
+    http_ports = [
+        80,
+        8000,
+        8080
+    ]
+
+    if port not in http_ports:
+
+        return "No Banner"
+
+    try:
+
+        socket_obj.send(
+            b"HEAD / HTTP/1.0\r\n\r\n"
+        )
+
+        banner = socket_obj.recv(
+            1024
+        ).decode(
+            errors="ignore"
+        ).strip()
+
+        banner = clean_banner(
+            banner
+        )
+
+        if banner:
+
+            return banner
+
+        return "No Banner"
+
+    except:
+
+        return "No Banner"
+
+
 def scan_port(target, port):
 
     try:
@@ -54,7 +119,7 @@ def scan_port(target, port):
             socket.SOCK_STREAM
         )
 
-        s.settimeout(1)
+        s.settimeout(0.3)
 
         result = s.connect_ex(
             (target, port)
@@ -73,28 +138,11 @@ def scan_port(target, port):
 
                 service = "Unknown"
 
-            # Banner grabbing
-            try:
+            banner = get_banner(
+                s,
+                port
+            )
 
-                s.send(
-                    b"HEAD / HTTP/1.0\r\n\r\n"
-                )
-
-                banner = s.recv(
-                    1024
-                ).decode(
-                    errors="ignore"
-                ).strip()
-
-                banner = clean_banner(
-                    banner
-                )
-
-            except:
-
-                banner = "No Banner"
-
-            # Example warning
             vulnerability = ""
 
             if "OpenSSH_6" in banner:
@@ -111,11 +159,14 @@ def scan_port(target, port):
             }
 
             print(
-                f"[green][OPEN][/green] "
+                f"\n[green][OPEN][/green] "
                 f"Port {port} - {service}"
             )
 
-            if banner != "No Banner":
+            if (
+                banner and
+                banner != "No Banner"
+            ):
 
                 print(
                     f"[yellow]"
@@ -131,13 +182,100 @@ def scan_port(target, port):
                     f"[/red] {vulnerability}"
                 )
 
-            print()
-
         s.close()
 
     except:
 
         pass
+
+
+def save_report(target):
+
+    timestamp = datetime.now().strftime(
+        "%Y-%m-%d_%H-%M-%S"
+    )
+
+    report_file = (
+        f"reports/"
+        f"{target}_scan_"
+        f"{timestamp}.json"
+    )
+
+    with open(report_file, "w") as f:
+
+        json.dump(
+            scan_results,
+            f,
+            indent=4
+        )
+
+    print(
+        f"\n[bold cyan]"
+        f"Report saved:"
+        f"[/bold cyan] {report_file}"
+    )
+
+
+def display_summary():
+
+    if scan_results:
+
+        table = Table(
+            title=(
+                f"Open Ports Summary "
+                f"({len(scan_results)} Open)"
+            )
+        )
+
+        table.add_column(
+            "Port",
+            style="cyan"
+        )
+
+        table.add_column(
+            "Service",
+            style="green"
+        )
+
+        table.add_column(
+            "Banner",
+            style="yellow"
+        )
+
+        for port in sorted(scan_results):
+
+            details = scan_results[port]
+
+            banner_display = (
+                details["banner"]
+                if details["banner"] != "No Banner"
+                else "-"
+            )
+
+            table.add_row(
+                str(port),
+                details["service"],
+                banner_display
+            )
+
+        console.print(table)
+
+        print(
+            f"[bold green]"
+            f"Open ports found:"
+            f"[/bold green] "
+            f"{len(scan_results)}"
+        )
+
+    else:
+
+        print(
+            "[yellow]"
+            "Scan finished."
+            " No open ports detected "
+            "in selected range."
+            "[/yellow]"
+        )
 
 
 def run_port_scan(
@@ -154,103 +292,99 @@ def run_port_scan(
         f"[/bold green]\n"
     )
 
-    threads = []
+    resolved_ip = resolve_target(
+        target
+    )
+
+    if not resolved_ip:
+
+        print(
+            "[red]"
+            "Failed to resolve target."
+            "[/red]"
+        )
+
+        return
 
     scan_results.clear()
 
+    start_time = time.time()
+
+    futures = []
+
     try:
 
-        for port in range(
-            start_port,
-            end_port + 1
-        ):
+        with ThreadPoolExecutor(
+            max_workers=50
+        ) as executor:
 
-            t = threading.Thread(
-                target=scan_port,
-                args=(target, port)
-            )
+            for port in range(
+                start_port,
+                end_port + 1
+            ):
 
-            threads.append(t)
-
-            t.start()
-
-        for t in threads:
-
-            t.join()
-
-        # Summary table
-        if scan_results:
-
-            table = Table(
-                title="Open Ports Summary"
-            )
-
-            table.add_column(
-                "Port",
-                style="cyan"
-            )
-
-            table.add_column(
-                "Service",
-                style="green"
-            )
-
-            table.add_column(
-                "Banner",
-                style="yellow"
-            )
-
-            for port, details in scan_results.items():
-
-                table.add_row(
-                    str(port),
-                    details["service"],
-                    details["banner"]
+                future = executor.submit(
+                    scan_port,
+                    resolved_ip,
+                    port
                 )
 
-            console.print(table)
+                futures.append(future)
 
-        else:
+                if (
+                    port % 5000 == 0 and
+                    port != end_port
+                ):
+
+                    print(
+                        f"[cyan]"
+                        f"Scanned {port} ports..."
+                        f"[/cyan]"
+                    )
+
+            for future in as_completed(
+                futures
+            ):
+
+                future.result()
+
+        if end_port > 5000:
 
             print(
-                "[yellow]"
-                "No open ports found"
-                "[/yellow]"
+                "\n[cyan]"
+                "Finalizing scan results..."
+                "[/cyan]"
             )
 
-        # Save report
-        timestamp = datetime.now().strftime(
-            "%Y-%m-%d_%H-%M-%S"
+        end_time = time.time()
+
+        elapsed = round(
+            end_time - start_time,
+            2
         )
 
-        report_file = (
-            f"reports/"
-            f"{target}_scan_"
-            f"{timestamp}.json"
-        )
-
-        with open(report_file, "w") as f:
-
-            json.dump(
-                scan_results,
-                f,
-                indent=4
-            )
+        display_summary()
 
         print(
             f"\n[bold green]"
             f"Scan Completed"
-            f"[/bold green]\n"
-            f"[bold cyan]"
-            f"Report saved:"
-            f"[/bold cyan] {report_file}"
+            f"[/bold green]"
         )
+
+        print(
+            f"[bold cyan]"
+            f"Scan completed in "
+            f"{elapsed} seconds"
+            f"[/bold cyan]"
+        )
+
+        save_report(target)
 
     except KeyboardInterrupt:
 
         print(
             "\n[red]"
-            "Scan stopped by user"
+            "Scan interrupted by user."
             "[/red]"
         )
 
@@ -283,7 +417,7 @@ def port_scan_menu():
 
         target = console.input(
             "\n[bold green]"
-            "toolkit/portscan >[/bold green] "
+            "Target >[/bold green] "
         ).strip()
 
         if target.lower() in [
@@ -312,12 +446,12 @@ def port_scan_menu():
         )
 
         print("1. Common ports (1-1024)")
-        print("2. All ports (1-65535)")
+        print("2. Extended scan (1-10000)")
         print("3. Custom range")
 
         choice = console.input(
             "\n[bold green]"
-            "toolkit/portscan >[/bold green] "
+            "Choice >[/bold green] "
         ).strip()
 
         if choice == "1":
@@ -328,21 +462,58 @@ def port_scan_menu():
         elif choice == "2":
 
             start_port = 1
-            end_port = 65535
+            end_port = 10000
 
         elif choice == "3":
 
-            start_port = int(
-                console.input(
-                    "\nStart Port > "
-                )
-            )
+            try:
 
-            end_port = int(
-                console.input(
-                    "End Port > "
+                start_port = int(
+                    console.input(
+                        "\nStart Port > "
+                    )
                 )
-            )
+
+                end_port = int(
+                    console.input(
+                        "End Port > "
+                    )
+                )
+
+                if (
+                    start_port < 1 or
+                    end_port > 65535
+                ):
+
+                    print(
+                        "[red]"
+                        "Ports must be between "
+                        "1 and 65535"
+                        "[/red]"
+                    )
+
+                    continue
+
+                if start_port > end_port:
+
+                    print(
+                        "[red]"
+                        "Start port cannot be "
+                        "greater than end port"
+                        "[/red]"
+                    )
+
+                    continue
+
+            except:
+
+                print(
+                    "[red]"
+                    "Invalid port range"
+                    "[/red]"
+                )
+
+                continue
 
         else:
 
@@ -367,7 +538,7 @@ def port_scan_menu():
 
         next_choice = console.input(
             "\n[bold green]"
-            "toolkit/portscan >[/bold green] "
+            "Choice >[/bold green] "
         ).strip()
 
         if next_choice == "2":

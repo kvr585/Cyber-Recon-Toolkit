@@ -19,11 +19,24 @@ def clean_value(value):
 
         if len(value) > 0:
 
-            return str(value[0])
+            return value[0]
 
         return "Not Available"
 
-    return str(value) if value else "Not Available"
+    return value if value else "Not Available"
+
+
+def format_date(value):
+
+    try:
+
+        return value.strftime(
+            "%d %b %Y"
+        )
+
+    except:
+
+        return str(value)
 
 
 def whois_lookup(domain):
@@ -49,13 +62,66 @@ def whois_lookup(domain):
 
         info = whois.whois(domain)
 
-        registrar = clean_value(info.registrar)
+        registrar = str(
+            clean_value(info.registrar)
+        )
 
-        creation = clean_value(info.creation_date)
+        creation = format_date(
+            clean_value(info.creation_date)
+        )
 
-        expiration = clean_value(info.expiration_date)
+        expiration = format_date(
+            clean_value(info.expiration_date)
+        )
+
+        organization = str(
+            clean_value(info.org)
+        )
+
+        country = str(
+            clean_value(info.country)
+        )
+
+        status = clean_value(info.status)
+
+        if isinstance(status, list):
+
+            status = ", ".join(
+                list(set(status))
+            )
+
+        status = str(status)
 
         name_servers = info.name_servers
+
+        # Clean duplicate nameservers
+        if name_servers:
+
+            if isinstance(
+                name_servers,
+                (list, set)
+            ):
+
+                cleaned_ns = sorted(
+                    set(
+                        ns.lower()
+                        for ns in name_servers
+                    )
+                )
+
+                ns_string = "\n".join(
+                    cleaned_ns
+                )
+
+            else:
+
+                ns_string = str(
+                    name_servers
+                ).lower()
+
+        else:
+
+            ns_string = "Not Available"
 
         # Create table
         table = Table(
@@ -64,7 +130,8 @@ def whois_lookup(domain):
 
         table.add_column(
             "Field",
-            style="cyan"
+            style="cyan",
+            no_wrap=True
         )
 
         table.add_column(
@@ -83,33 +150,29 @@ def whois_lookup(domain):
         )
 
         table.add_row(
-            "Creation Date",
+            "Created",
             creation
         )
 
         table.add_row(
-            "Expiration Date",
+            "Expires",
             expiration
         )
 
-        if name_servers:
+        table.add_row(
+            "Organization",
+            organization
+        )
 
-            if isinstance(
-                name_servers,
-                (list, set)
-            ):
+        table.add_row(
+            "Country",
+            country
+        )
 
-                ns_string = "\n".join(
-                    sorted(name_servers)
-                )
-
-            else:
-
-                ns_string = str(name_servers)
-
-        else:
-
-            ns_string = "Not Available"
+        table.add_row(
+            "Status",
+            status
+        )
 
         table.add_row(
             "Name Servers",
@@ -124,9 +187,13 @@ def whois_lookup(domain):
             "registrar": registrar,
             "creation_date": creation,
             "expiration_date": expiration,
+            "organization": organization,
+            "country": country,
+            "status": status,
             "name_servers": (
-                list(name_servers)
-                if isinstance(
+                cleaned_ns
+                if name_servers
+                and isinstance(
                     name_servers,
                     (list, set)
                 )
@@ -183,7 +250,11 @@ def whois_menu():
             "toolkit/whois >[/bold green] "
         ).strip()
 
-        if domain.lower() in ["back", "exit", "quit"]:
+        if domain.lower() in [
+            "back",
+            "exit",
+            "quit"
+        ]:
 
             break
 
