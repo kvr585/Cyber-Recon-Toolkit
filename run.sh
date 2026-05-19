@@ -23,7 +23,7 @@ source venv/bin/activate
 # Install requirements
 echo "[+] Checking dependencies..."
 
-pip install -q -r requirements.txt
+pip install -r requirements.txt
 
 echo ""
 echo "[+] Launching Cyber Recon Toolkit..."
