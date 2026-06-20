@@ -7,11 +7,11 @@ from datetime import datetime
 from rich import print
 from rich.console import Console
 
-from modules.dns_enum import dns_lookup
-from modules.port_scanner import run_port_scan, is_valid_target
-from modules.report_generator import add_watermark, open_report_file
-from modules.phishing_checker import analyze_url
-from modules.whois_lookup import whois_lookup
+from .dns_enum import dns_lookup
+from .port_scanner import run_port_scan, is_valid_target
+from .report_generator import add_watermark, open_report_file
+from .phishing_checker import analyze_url
+from .whois_lookup import whois_lookup
 
 from reportlab.lib.colors import grey, HexColor
 from reportlab.lib.pagesizes import letter

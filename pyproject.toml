@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyber-recon-toolkit"
+version = "1.0.0"
+description = "Cyber Recon Toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+
+authors = [
+  {name = "Veera Bhadhra Rao"}
+]
+
+dependencies = [
+  "rich",
+  "python-whois",
+  "dnspython",
+  "tldextract",
+  "requests",
+  "reportlab"
+]
+
+[project.scripts]
+cyber-recon = "cyber_recon_toolkit.toolkit:main"
+
+[tool.setuptools.packages.find]
+include = ["cyber_recon_toolkit*"]
