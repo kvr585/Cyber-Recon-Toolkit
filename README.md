@@ -1,6 +1,17 @@
 # Cyber Recon Toolkit
 
-Cyber Recon Toolkit is a modular terminal-based cybersecurity and reconnaissance framework designed for network analysis, security assessment, forensic investigation, and automated reporting.
+[![PyPI](https://img.shields.io/pypi/v/cyber-recon-toolkit)](https://pypi.org/project/cyber-recon-toolkit/)
+[![Python](https://img.shields.io/pypi/pyversions/cyber-recon-toolkit)](https://pypi.org/project/cyber-recon-toolkit/)
+[![GitHub stars](https://img.shields.io/github/stars/kvr585/Cyber-Recon-Toolkit?style=social)](https://github.com/kvr585/Cyber-Recon-Toolkit)
+
+📦 **Install directly from PyPI**
+
+```bash
+pip install cyber-recon-toolkit
+cyber-recon
+```
+
+Cyber Recon Toolkit is a modular Python-based cybersecurity framework that provides reconnaissance, network analysis, automated security assessment, forensic utilities, and professional report generation through a unified command-line interface.
 
 ---
 
@@ -29,6 +40,15 @@ This toolkit combines multiple reconnaissance, scanning, forensic, and reporting
 - Phishing URL Checker
 - Combined Report Generator
 
+### Security Assessment
+
+- Automated Security Assessment
+- Risk Classification (LOW / MEDIUM / HIGH)
+- Executive Summary Generation
+- Consolidated Security Reporting
+- JSON Assessment Reports
+- PDF Assessment Reports
+
 ---
 
 ## Reporting Features
@@ -47,21 +67,27 @@ This toolkit combines multiple reconnaissance, scanning, forensic, and reporting
 
 ```text
 Cyber-Recon-Toolkit/
+├── cyber_recon_toolkit/
+│   ├── modules/
+│   │   ├── dns_enum.py
+│   │   ├── hash_generator.py
+│   │   ├── log_analyzer.py
+│   │   ├── phishing_checker.py
+│   │   ├── ping_sweep.py
+│   │   ├── port_scanner.py
+│   │   ├── report_generator.py
+│   │   ├── security_assessment.py
+│   │   └── whois_lookup.py
+│   ├── __init__.py
+│   ├── __main__.py
+│   └── toolkit.py
 ├── README.md
+├── pyproject.toml
 ├── requirements.txt
 ├── run.sh
-├── toolkit.py
+├── screenshots/
 ├── reports/
-├── logs/
-├── modules/
-│   ├── dns_enum.py
-│   ├── hash_generator.py
-│   ├── log_analyzer.py
-│   ├── phishing_checker.py
-│   ├── ping_sweep.py
-│   ├── port_scanner.py
-│   ├── report_generator.py
-│   └── whois_lookup.py
+└── logs/
 ```
 
 ---
@@ -76,16 +102,22 @@ Cyber-Recon-Toolkit/
 
 ## Installation
 
-Clone the repository:
+### Install from PyPI
+
+The toolkit is published on PyPI and can be installed with a single command:
 
 ```bash
-git clone https://github.com/kvr585/Cyber-Recon-Toolkit
-cd Cyber-Recon-Toolkit
+pip install cyber-recon-toolkit
+cyber-recon
 ```
 
-Launch the toolkit:
+### Install from Source
+
+Clone the repository for development:
 
 ```bash
+git clone https://github.com/kvr585/Cyber-Recon-Toolkit.git
+cd Cyber-Recon-Toolkit
 ./run.sh
 ```
 
@@ -98,18 +130,19 @@ The launcher automatically:
 
 ---
 
-## Required Python Packages
+## Quick Start
 
-The toolkit uses the following Python packages:
+After installation, launch the toolkit:
 
-- `rich`
-- `python-whois`
-- `dnspython`
-- `tldextract`
-- `requests`
-- `reportlab`
+```bash
+cyber-recon
+```
 
-All dependencies are already included in `requirements.txt`.
+Or if running from source:
+
+```bash
+./run.sh
+```
 
 ---
 
@@ -142,8 +175,11 @@ UTILITIES
 7. Phishing URL Checker
 8. Generate Combined Report
 
+ASSESSMENT
+10. Automated Security Assessment
+
 SYSTEM
-9. Exit
+9. Exit (Available from any menu)
 ```
 
 ---
@@ -231,6 +267,25 @@ SYSTEM
 
 ---
 
+### Automated Security Assessment
+
+The Automated Security Assessment module performs multiple security checks against a target and generates a consolidated report.
+
+Assessment workflow:
+
+- WHOIS Analysis
+- DNS Enumeration
+- Port Scanning
+- Phishing URL Analysis
+- Risk Classification
+- Executive Summary Generation
+- JSON Report Export
+- PDF Report Export
+
+The module automatically combines findings from multiple components into a single assessment report for easier review and documentation.
+
+---
+
 ### Combined Report Generator
 
 - Aggregates module outputs into combined JSON
@@ -287,7 +342,7 @@ Generated reports may include:
 
 ---
 
-## Educational Purpose Disclaimer
+## Disclaimer
 
 This project is intended strictly for educational, academic, and authorized security testing purposes only.
 
@@ -298,4 +353,10 @@ The developer is not responsible for misuse or unauthorized activities performed
 ---
 
 ## Author
-Developed for cybersecurity research, network reconnaissance, and forensic reporting.
+
+**Veera Bhadhra Rao**
+
+Cyber Security Student | Python Developer | Cybersecurity Enthusiast | Open Source Contributor
+
+- GitHub: https://github.com/kvr585
+- PyPI: https://pypi.org/project/cyber-recon-toolkit/
